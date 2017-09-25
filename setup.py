@@ -27,4 +27,7 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
         "License :: OSI Approved :: MIT License",
     ],
+    install_requires=[
+        'wrapt'
+    ]
 )
