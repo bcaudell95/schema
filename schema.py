@@ -4,7 +4,7 @@ parsing, converted from JSON/YAML (or something else) to Python data-types."""
 
 import re
 
-__version__ = '0.6.7'
+__version__ = '0.6.8'
 __all__ = ['Schema',
            'And', 'Or', 'Regex', 'Optional', 'Use', 'Forbidden', 'Const',
            'SchemaError',
@@ -51,7 +51,7 @@ class SchemaWrongKeyError(SchemaError):
 
 class SchemaMissingKeyError(SchemaError):
     """Error should be raised when a mandatory key is not found within the
-    data set being vaidated"""
+    data set being validated"""
     pass
 
 
@@ -107,17 +107,17 @@ class Or(And):
         :param data: data to be validated by provided schema.
         :return: return validated data if not validation
         """
-        x = SchemaError([], [])
+        autos, errors = [], []
         for s in [self._schema(s, error=self._error,
                                ignore_extra_keys=self._ignore_extra_keys)
                   for s in self._args]:
             try:
                 return s.validate(data)
             except SchemaError as _x:
-                x = _x
-        raise SchemaError(['%r did not validate %r' % (self, data)] + x.autos,
+                autos, errors = _x.autos, _x.errors
+        raise SchemaError(['%r did not validate %r' % (self, data)] + autos,
                           [self._error.format(data) if self._error else None] +
-                          x.errors)
+                          errors)
 
 
 class Regex(object):
@@ -230,6 +230,17 @@ class Schema(object):
         if isinstance(s, Optional):
             return _priority(s._schema) + 0.5
         return _priority(s)
+
+    def is_valid(self, data):
+        """Return whether the given data has passed all the validations
+        that were specified in the given schema.
+        """
+        try:
+            self.validate(data)
+        except SchemaError:
+            return False
+        else:
+            return True
 
     def validate(self, data):
         Schema = self.__class__
